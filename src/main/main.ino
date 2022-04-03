@@ -12,10 +12,8 @@
 #define SHIFT_DATA  2  // DS
 #define SHIFT_CLOCK 3  // SHCP
 #define SHIFT_LATCH 4  // STCP
-#define DATA_PINS   5, 6, 7, 8, 9, 10, 11, 12
 
-const uint8_t dataPins[DATA_BITS] = {5, 6, 7, 8, 9, 10, 11, 12};
-uint8_t ledOn = false;
+static const spc::Pin dataPins[DATA_BITS] = { 5, 6, 7, 8, 9, 10, 11, 12 };
 
 spc::EEPROMProgrammer programmer;
 
@@ -36,76 +34,40 @@ void pulse(int pin)
   digitalWrite(pin, LOW);
 }
 
-void writeAddr(uint16_t addr, bool set = false)
-{
-  shiftOut(SHIFT_DATA, SHIFT_CLOCK, MSBFIRST, (addr >> 8) & 0xff);  // high byte
-  shiftOut(SHIFT_DATA, SHIFT_CLOCK, MSBFIRST, addr & 0xff);         // low byte
-
-  if (set)
-    pulse(SHIFT_LATCH);
-}
-
-uint8_t readData()
-{
-  // ASSUMPTION: Data pins are in INPUT mode
-
-  uint8_t data = 0;
-  for (int pinNum = 0; pinNum < DATA_BITS; pinNum++)
-  {
-    data |= (digitalRead(dataPins[pinNum]) << pinNum);
-  }
-
-  return data;
-}
-
 void setup()
 {
-  // set up the programmer
-  spc::PinConfig pinConfig = {
-    .addrDataPin = SHIFT_DATA,
-    .addrClockPin = SHIFT_CLOCK,
-    .addrLatchPin = SHIFT_LATCH,
-    .nChipEnablePin = A0,
-    .nOutputEnablePin = A1,
-    //.modePin = A2,
-    .dataPins = {5,6,7,8,9,10,11,12}
-  };
-  programmer.setPinConfig(pinConfig);
-
-  // initialize address pins
-  pinMode(SHIFT_DATA, OUTPUT);
-  pinMode(SHIFT_LATCH, OUTPUT);
-  pinMode(SHIFT_CLOCK, OUTPUT);
-
-  // initialize data pins
-  for (auto pin : dataPins)
-    pinMode(pin, INPUT);
-
-  writeAddr(0x0000, true);  // clear the buffer
-
   Serial.begin(115200);
+
+  // set up the programmer
+  spc::PinConfig programmerPins;
+
+  programmerPins.addrData = SHIFT_DATA;
+  programmerPins.addrClock = SHIFT_CLOCK;
+  programmerPins.addrLatch = SHIFT_LATCH;
+  programmerPins.nChipEnable = A0;
+  programmerPins.nOutputEnable = A1;
+  //programmerPins.modeSelect = A2;
+  memcpy(programmerPins.data, dataPins, DATA_BITS);
+  
+  programmer.setPinConfig(programmerPins);
+  if (!programmer.initialize())
+  {
+    Serial.println("Failed to initialize spc::EEPROMProgrammer.");
+    return 0;
+  }
 }
 
 void loop()
 {
-  /* Count from 0 to 65535. */
-  for (uint16_t addr = 0; addr <= MAX_ADDR; addr++)
-  {
-    if ((addr % 4) == 0)
-    {
-      //digitalWrite(A0, ledOn);
-      ledOn = !ledOn;
-    }
-      
-    writeAddr(addr, true);
-    //delayMicroseconds(1);  // T_ACC <= 45ns
-    uint8_t data = readData();
+  // programmer.erase();
+  // programmer.write(int16_t addr, int8_t data);
+  int16_t addr = 0x1234;
+  byte data = programmer.read(addr);
 
-    char sbuf[32];
-    sprintf(sbuf, "0x%04x: %u", addr, data);
-    //Serial.println(sbuf);
-    Serial.println(sbuf);
-    
-    delay(500);
-  }
+  char sbuf[32];
+  sprintf(sbuf, "0x%04x: %u", addr, data);
+  //Serial.println(sbuf);
+  Serial.println(sbuf);
+
+  delay(500);
 }
