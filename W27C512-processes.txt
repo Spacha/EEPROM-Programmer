@@ -1,0 +1,20 @@
+Winbond W27C512
+
+ERASING (0 --> 1):
+1. Set:
+    nOE/Vpp: 14V
+         A9: 14V
+         A0: 0V
+    All other address pins: 0V
+    All data pins:          5V
+2. Start:
+    Pulse nCE: 0V
+
+
+PROGRAMMING (1 --> 0):
+1. Set:
+    nOE/Vpp: 12V
+    Address pins:   the desired address
+    Input pins:     the desired input
+2. Start:
+    Pulse nCE: 0V
