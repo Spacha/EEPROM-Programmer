@@ -26,14 +26,6 @@ spc::EEPROMProgrammer programmer;
  * Total of 3 + 8 + 3 pins needed.
  */
 
-void pulse(int pin)
-{
-  digitalWrite(pin, LOW);
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(100);
-  digitalWrite(pin, LOW);
-}
-
 void setup()
 {
   Serial.begin(115200);
