@@ -1,21 +1,23 @@
+#include "Programmer.h"
+
 /**
  * Pins:
  * D2,D3,D4:  Address shift register
  * D5..D12:   Data input/output
  * A0,A1,A2:  Chip control
  */
-
 #define MAX_ADDR    65535  // 2^16 - 1
 #define DATA_BITS   8
 
 #define SHIFT_DATA  2  // DS
 #define SHIFT_CLOCK 3  // SHCP
 #define SHIFT_LATCH 4  // STCP
+#define DATA_PINS   5, 6, 7, 8, 9, 10, 11, 12
 
 const uint8_t dataPins[DATA_BITS] = {5, 6, 7, 8, 9, 10, 11, 12};
 uint8_t ledOn = false;
 
-//uint8_t dataMode = INPUT;  // INPUT, OUTPUT
+spc::EEPROMProgrammer programmer;
 
 /**
  * Address SHR pins: D[2..4].
@@ -58,6 +60,18 @@ uint8_t readData()
 
 void setup()
 {
+  // set up the programmer
+  spc::PinConfig pinConfig = {
+    .addrDataPin = SHIFT_DATA,
+    .addrClockPin = SHIFT_CLOCK,
+    .addrLatchPin = SHIFT_LATCH,
+    .nChipEnablePin = A0,
+    .nOutputEnablePin = A1,
+    //.modePin = A2,
+    .dataPins = {5,6,7,8,9,10,11,12}
+  };
+  programmer.setPinConfig(pinConfig);
+
   // initialize address pins
   pinMode(SHIFT_DATA, OUTPUT);
   pinMode(SHIFT_LATCH, OUTPUT);
